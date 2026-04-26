@@ -7,82 +7,27 @@ on:
       - staging
       - main
 
+env:
+  AWS_REGION: ap-south-1
+
 jobs:
 
-  terraform:
+  # ================= FORMAT =================
+  fmt:
+    name: Format Check
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
-
-      # DEV
-      - name: Dev Init
-        if: github.ref == 'refs/heads/dev'
-        run: |
-          cd envs/dev
-          terraform init
-
-      - name: Dev Plan
-        if: github.ref == 'refs/heads/dev'
-        run: |
-          cd envs/dev
-          terraform plan
-
-      - name: Dev Apply
-        if: github.ref == 'refs/heads/dev'
-        run: |
-          cd envs/dev
-          terraform apply -auto-approve
-
-      # STAGING
-      - name: Staging Init
-        if: github.ref == 'refs/heads/staging'
-        run: |
-          cd envs/staging
-          terraform init
-
-      - name: Staging Plan
-        if: github.ref == 'refs/heads/staging'
-        run: |
-          cd envs/staging
-          terraform plan
-
-      - name: Staging Apply
-        if: github.ref == 'refs/heads/staging'
-        run: |
-          cd envs/staging
-          terraform apply -auto-approve
-
-      # PROD (only plan here)
-      - name: Prod Init
-        if: github.ref == 'refs/heads/main'
-        run: |
-          cd envs/prod
-          terraform init
-
-      - name: Prod Plan
-        if: github.ref == 'refs/heads/main'
-        run: |
-          cd envs/prod
-          terraform plan
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+      - run: terraform fmt -check -recursive
 
 
-  # 👇 ADD THIS HERE (same level as terraform)
-  prod-apply:
-    if: github.ref == 'refs/heads/main'
+  # ================= VALIDATE =================
+  validate:
+    name: Validate
     runs-on: ubuntu-latest
-    environment: prod   # 🔐 this enables approval
+    needs: fmt
 
     steps:
       - uses: actions/checkout@v3
@@ -92,7 +37,103 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: ${{ env.AWS_REGION }}
+
+      - run: |
+          if [[ "${GITHUB_REF##*/}" == "dev" ]]; then cd envs/dev; fi
+          if [[ "${GITHUB_REF##*/}" == "staging" ]]; then cd envs/staging; fi
+          if [[ "${GITHUB_REF##*/}" == "main" ]]; then cd envs/prod; fi
+          terraform init
+          terraform validate
+
+
+  # ================= PLAN =================
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - run: |
+          if [[ "${GITHUB_REF##*/}" == "dev" ]]; then cd envs/dev; fi
+          if [[ "${GITHUB_REF##*/}" == "staging" ]]; then cd envs/staging; fi
+          if [[ "${GITHUB_REF##*/}" == "main" ]]; then cd envs/prod; fi
+          terraform init
+          terraform plan
+
+
+  # ================= APPLY DEV =================
+  apply-dev:
+    name: Apply Dev
+    runs-on: ubuntu-latest
+    needs: plan
+    if: github.ref == 'refs/heads/dev'
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - run: |
+          cd envs/dev
+          terraform init
+          terraform apply -auto-approve
+
+
+  # ================= APPLY STAGING =================
+  apply-staging:
+    name: Apply Staging
+    runs-on: ubuntu-latest
+    needs: plan
+    if: github.ref == 'refs/heads/staging'
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - run: |
+          cd envs/staging
+          terraform init
+          terraform apply -auto-approve
+
+
+  # ================= APPLY PROD (MANUAL APPROVAL) =================
+  apply-prod:
+    name: Apply Production
+    runs-on: ubuntu-latest
+    needs: plan
+    if: github.ref == 'refs/heads/main'
+    environment: prod   # 🔐 requires approval
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - run: |
           cd envs/prod
