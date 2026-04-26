@@ -11,6 +11,6 @@ module "vpc1" {
 module "subnet1" {
   source      = "../../modules/subnet"
   vpc_id      = module.vpc1.vpc_id
-  cidr_block  = "192.2.1.0/24"
+  cidr_block  = "192.2.2.0/24"
   subnet_name = "staging-subnet-1"
 }
