@@ -14,11 +14,3 @@ module "subnet" {
   cidr_block  = "10.0.1.0/24"
   subnet_name = "dev-subnet"
 }
-
-module "ec2" {
-  source        = "../../modules/ec2"
-  ami           = "ami-0abcdef1234567890"
-  instance_type = "t2.micro"
-  subnet_id     = module.subnet.subnet_id
-  name          = "dev-vm"
-}
