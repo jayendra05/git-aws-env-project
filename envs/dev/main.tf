@@ -42,7 +42,7 @@ module "vpc3" {
 # Subnet for VPC 3
 module "subnet3" {
   source      = "../../modules/subnet"
-  vpc_id      = module.vpc2.vpc_id
+  vpc_id      = module.vpc3.vpc_id
   cidr_block  = "10.5.1.0/24"
   subnet_name = "dev-subnet-3"
 }
