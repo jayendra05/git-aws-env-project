@@ -3,139 +3,84 @@ name: Terraform Pipeline
 on:
   push:
     branches:
-      - dev
-      - staging
       - main
-
-env:
-  AWS_REGION: ap-south-1
 
 jobs:
 
-  # ================= FORMAT =================
   fmt:
     name: Format Check
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
-      - run: terraform fmt -check -recursive
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
 
-
-  # ================= VALIDATE =================
   validate:
     name: Validate
     runs-on: ubuntu-latest
     needs: fmt
-
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
 
-      - uses: aws-actions/configure-aws-credentials@v2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ap-south-1
 
-      - run: |
-          if [[ "${GITHUB_REF##*/}" == "dev" ]]; then cd envs/dev; fi
-          if [[ "${GITHUB_REF##*/}" == "staging" ]]; then cd envs/staging; fi
-          if [[ "${GITHUB_REF##*/}" == "main" ]]; then cd envs/prod; fi
-          terraform init
-          terraform validate
+      - name: Terraform Init
+        run: terraform init
+        working-directory: envs/dev
 
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: envs/dev
 
-  # ================= PLAN =================
   plan:
     name: Plan
     runs-on: ubuntu-latest
     needs: validate
-
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
 
-      - uses: aws-actions/configure-aws-credentials@v2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ap-south-1
 
-      - run: |
-          if [[ "${GITHUB_REF##*/}" == "dev" ]]; then cd envs/dev; fi
-          if [[ "${GITHUB_REF##*/}" == "staging" ]]; then cd envs/staging; fi
-          if [[ "${GITHUB_REF##*/}" == "main" ]]; then cd envs/prod; fi
-          terraform init
-          terraform plan
+      - name: Terraform Init
+        run: terraform init
+        working-directory: envs/dev
 
+      - name: Terraform Plan
+        run: terraform plan
+        working-directory: envs/dev
 
-  # ================= APPLY DEV =================
-  apply-dev:
-    name: Apply Dev
+  apply:
+    name: Apply
     runs-on: ubuntu-latest
     needs: plan
-    if: github.ref == 'refs/heads/dev'
-
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
 
-      - uses: aws-actions/configure-aws-credentials@v2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ap-south-1
 
-      - run: |
-          cd envs/dev
-          terraform init
-          terraform apply -auto-approve
+      - name: Terraform Init
+        run: terraform init
+        working-directory: envs/dev
 
-
-  # ================= APPLY STAGING =================
-  apply-staging:
-    name: Apply Staging
-    runs-on: ubuntu-latest
-    needs: plan
-    if: github.ref == 'refs/heads/staging'
-
-    steps:
-      - uses: actions/checkout@v3
-      - uses: hashicorp/setup-terraform@v2
-
-      - uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - run: |
-          cd envs/staging
-          terraform init
-          terraform apply -auto-approve
-
-
-  # ================= APPLY PROD (MANUAL APPROVAL) =================
-  apply-prod:
-    name: Apply Production
-    runs-on: ubuntu-latest
-    needs: plan
-    if: github.ref == 'refs/heads/main'
-    environment: prod   # 🔐 requires approval
-
-    steps:
-      - uses: actions/checkout@v3
-      - uses: hashicorp/setup-terraform@v2
-
-      - uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - run: |
-          cd envs/prod
-          terraform init
-          terraform apply -auto-approve
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: envs/dev
