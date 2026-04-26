@@ -16,9 +16,9 @@ module "subnet" {
 }
 
 module "ec2" {
-  source         = "../../modules/ec2"
-  ami            = "ami-0abcdef1234567890"
-  instance_type  = "t2.micro"
-  subnet_id      = module.subnet.subnet_id
-  name           = "dev-vm"
+  source        = "../../modules/ec2"
+  ami           = "ami-0abcdef1234567890"
+  instance_type = "t2.micro"
+  subnet_id     = module.subnet.subnet_id
+  name          = "dev-vm"
 }
