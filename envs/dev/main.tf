@@ -31,3 +31,18 @@ module "subnet2" {
   cidr_block  = "10.1.1.0/24"
   subnet_name = "dev-subnet-2"
 }
+
+# VPC 3
+module "vpc2" {
+  source     = "../../modules/vpc"
+  cidr_block = "10.3.0.0/16"
+  vpc_name   = "dev-vpc-3"
+}
+
+# Subnet for VPC 3
+module "subnet2" {
+  source      = "../../modules/subnet"
+  vpc_id      = module.vpc2.vpc_id
+  cidr_block  = "10.3.1.0/24"
+  subnet_name = "dev-subnet-3"
+}
