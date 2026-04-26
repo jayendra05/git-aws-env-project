@@ -33,14 +33,14 @@ module "subnet2" {
 }
 
 # VPC 3
-module "vpc2" {
+module "vpc3" {
   source     = "../../modules/vpc"
   cidr_block = "10.2.0.0/16"
   vpc_name   = "dev-vpc-3"
 }
 
 # Subnet for VPC 3
-module "subnet2" {
+module "subnet3" {
   source      = "../../modules/subnet"
   vpc_id      = module.vpc2.vpc_id
   cidr_block  = "10.2.1.0/24"
