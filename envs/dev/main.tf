@@ -22,18 +22,3 @@ module "subnet1-2" {
   cidr_block  = "10.0.2.0/24"
   subnet_name = "dev-subnet-1-2"
 }
-
-# VPC 2
-module "vpc2" {
-  source     = "../../modules/vpc"
-  cidr_block = "10.1.0.0/16"
-  vpc_name   = "dev-vpc-2"
-}
-
-# Subnet for VPC 1
-module "subnet2" {
-  source      = "../../modules/subnet"
-  vpc_id      = module.vpc2.vpc_id
-  cidr_block  = "10.1.1.0/24"
-  subnet_name = "dev-subnet-2"
-}
