@@ -16,33 +16,3 @@ module "subnet1" {
   cidr_block  = "10.0.1.0/24"
   subnet_name = "dev-subnet-1"
 }
-
-# VPC 2
-module "vpc2" {
-  source     = "../../modules/vpc"
-  cidr_block = "10.1.0.0/16"
-  vpc_name   = "dev-vpc-2"
-}
-
-# Subnet for VPC 2
-module "subnet2" {
-  source      = "../../modules/subnet"
-  vpc_id      = module.vpc2.vpc_id
-  cidr_block  = "10.1.1.0/24"
-  subnet_name = "dev-subnet-2"
-}
-
-# VPC 3
-module "vpc3" {
-  source     = "../../modules/vpc"
-  cidr_block = "10.5.0.0/16"
-  vpc_name   = "dev-vpc-3"
-}
-
-# Subnet for VPC 3
-module "subnet3" {
-  source      = "../../modules/subnet"
-  vpc_id      = module.vpc3.vpc_id
-  cidr_block  = "10.5.1.0/24"
-  subnet_name = "dev-subnet-3"
-}
