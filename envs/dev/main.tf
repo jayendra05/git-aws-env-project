@@ -31,7 +31,7 @@ module "vpc2" {
 }
 
 # Subnet for VPC 1
-module "subnet1" {
+module "subnet2" {
   source      = "../../modules/subnet"
   vpc_id      = module.vpc2.vpc_id
   cidr_block  = "10.1.1.0/24"
