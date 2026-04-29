@@ -25,11 +25,11 @@ jobs:
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
 
-      - name: Terraform Init (dev only)
+      - name: Init (Dev)
         working-directory: envs/dev
         run: terraform init -backend=false
 
-      - name: Terraform Validate
+      - name: Validate (Dev)
         working-directory: envs/dev
         run: terraform validate
 
@@ -68,7 +68,6 @@ jobs:
           name: tfplan-dev
           path: envs/dev/tfplan
 
-
       # ---------------- STAGING ----------------
       - name: Init Staging
         if: github.ref == 'refs/heads/staging'
@@ -86,7 +85,6 @@ jobs:
         with:
           name: tfplan-staging
           path: envs/staging/tfplan
-
 
       # ---------------- PROD ----------------
       - name: Init Prod
@@ -130,6 +128,11 @@ jobs:
           name: tfplan-dev
           path: envs/dev
 
+      # ✅ FIX: INIT ADDED HERE
+      - name: Init Dev
+        working-directory: envs/dev
+        run: terraform init -reconfigure
+
       - name: Apply Dev
         working-directory: envs/dev
         run: terraform apply -input=false tfplan
@@ -157,6 +160,11 @@ jobs:
         with:
           name: tfplan-staging
           path: envs/staging
+
+      # ✅ FIX: INIT ADDED HERE
+      - name: Init Staging
+        working-directory: envs/staging
+        run: terraform init -reconfigure
 
       - name: Apply Staging
         working-directory: envs/staging
@@ -186,6 +194,11 @@ jobs:
         with:
           name: tfplan-prod
           path: envs/prod
+
+      # ✅ FIX: INIT ADDED HERE
+      - name: Init Prod
+        working-directory: envs/prod
+        run: terraform init -reconfigure
 
       - name: Apply Prod
         working-directory: envs/prod
