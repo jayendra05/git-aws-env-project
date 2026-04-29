@@ -4,10 +4,8 @@ terraform {
     key            = "dev/terraform.tfstate"
     region         = "ap-south-1"
 
-    # Enable state locking
-    dynamodb_table = "terraform-locks"
+    dynamodb_table = "terraform-lock"
 
-    # Recommended security settings
     encrypt        = true
   }
 }
