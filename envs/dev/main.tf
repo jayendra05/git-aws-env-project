@@ -16,3 +16,12 @@ module "subnet1" {
   cidr_block  = "10.0.1.0/24"
   subnet_name = "dev-subnet-1"
 }
+
+
+# Subnet for VPC 1
+module "subnet2" {
+  source      = "../../modules/subnet"
+  vpc_id      = module.vpc1.vpc_id
+  cidr_block  = "10.0.2.0/24"
+  subnet_name = "dev-subnet-2"
+}
